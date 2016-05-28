@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+<title>sss</title>
+<script src="js/angular.js"></script>		
+<script src="js/angular-route.js"></script>
+</head>
+<body ng-app="App">       
+	<h2>{{name}}</h2>
+	<div ng-controller="AppController as appCtrl">
+		Hello {{'World' + '!!!'}}! {{clock.now}}
+		<button ng-click="appCtrl.add(1)">Add</button>
+		<a ng-click="appCtrl.sub(1)">Sub</a>
+		<h4>counter: {{cnt}}</h4>
+
+	</div>
+<br>
+	<div ng-controller="AppCtrl2">
+		Hello {{'World' + '!!!'}}! {{clock.now}}
+	</div>
+
+	<script src="js/ctrl.js"></script>
+</body>
+</html>
