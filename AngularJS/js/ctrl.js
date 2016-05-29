@@ -12,14 +12,37 @@ angular.module('emailParser', [])
 		};
 }]);
 
-var app = angular.module('App', []);
+//#declare
+var app = angular.module('App', ['ngRoute']);
 //var app = angular.module('App', ['ngMessages']);
 //var app = angular.module('App', ['emailParser']);
 
-app.run(function($rootScope, $timeout) {
+//#run
+app.run(function($rootScope, $timeout, $location, $window) {
 	$rootScope.name = "Anna";
 
 	$rootScope.isDisabled = true;
+
+	$rootScope.$on('$routeChangeStart', function(evt, next, current) {
+			console.log('Route change start!' + next + '  ' + current);
+	});
+	$rootScope.$on('$routeChangeSuccess', function(evt, next, current) {
+			console.log('Route change success!' + next + '  ' + current);
+	});
+	$rootScope.$on('$routeChangeError', function(evt, previous, rejection) {
+			console.log('Route change error!' + previous + '  ' + rejection);
+	});
+
+//	$location.path('/views/hello.html');
+	console.log('absUrl' +$location.absUrl());
+	console.log('hash:' + $location.hash());
+	console.log('host:' + $location.host());
+	console.log('port:' + $location.port());
+	console.log('protocol:' + $location.protocol());
+	console.log('search:' + $location.search());
+	console.log('url:' + $location.url());
+//	$location.url('http://baidu.com');
+//	$window.location.href = '/views/hello.html';
 
 	//1s后显示指定的textarea
 	$timeout(function() {
@@ -30,6 +53,133 @@ app.run(function($rootScope, $timeout) {
 	}, 5000);
 });
 
+//#service
+var Person = function() {
+	this.getName = function() {
+		return "new generation";
+	};
+};
+
+app.service('personService', Person);
+
+//#constant
+app.constant('apikey', '123445');
+
+//#value
+app.value('apikey2', '1234888885');
+
+//#decorator
+var greeterDecrator = function($delegate, $log) {
+	var pre_greet = function() {
+		console.log("Say pre-hi");
+	};
+	return {
+		greet: pre_greet,
+	};
+};
+//#factory
+app
+/*
+.factory('greeter', function(apikey, apikey2) {
+	return {
+		greet: function(msg) { console.log(msg + '. ' + apikey + '. ' + apikey2); }
+	};
+})
+*/
+//与上面的工厂方法等价
+.provider('greeter', {
+	$get: function() {
+		return {
+			greet: function(msg) {console.log(msg); }
+		};
+	}
+})
+.config(function($provide) {
+	$provide.decorator('greeter', greeterDecrator);
+})
+.factory('GithubAPIService', function($http) {
+	var githubUrl = "https://api.github.com";
+	var runUserRequest = function(username, path) {
+		return $http({
+			method: 'JSONP',
+			url: githubUrl + '/users/' + username + '/' + path + '?callback=JSON_CALLBACK',
+		});
+	};
+	return {
+		events: function(username) {
+			return runUserRequest(username, 'events');
+			},
+		getGithubUrl: function() {
+			return githubUrl;
+		},
+		setGithubUrl: function(url) {
+			console.log("new github url: " + url);
+			githubUrl = url;
+		},
+
+	}
+}).controller('UseFacController', ['$scope', '$timeout', 'greeter', 'GithubAPIService', 'personService', function($scope, $timeout, greeter, GithubAPIService, personService) {
+	$scope.sayHello = function() {
+
+		console.log("get name from personService: " + personService.getName());
+		greeter.greet('Hello');
+		GithubAPIService.setGithubUrl('sss');
+	};
+
+	$scope.githubUrl = GithubAPIService.getGithubUrl();
+	var timeout;
+	$scope.$watch("github.username", function(newUsername) {
+			$scope.githubUrl = GithubAPIService.getGithubUrl();
+			if (newUsername) {
+				if (timeout) $timeout.cancel(timeout);
+				timeout = $timeout(function() {
+					GithubAPIService.events(newUsername)
+					.success(function(data, status, headers) {
+							$scope.github.events = data.data;
+					});
+				}, 1000);
+			}
+	});
+}]);
+
+//#config
+app.config(['$locationProvider', function($locationProvider) {
+	$locationProvider.html5Mode(false);
+	$locationProvider.hashPrefix('+');
+}]);
+
+app.config(['$routeProvider', function($routeProvider) {
+	$routeProvider
+		/*
+		.when('/', {
+			templateUrl: 'angular_test.html',
+			controller: 'AppController'
+		})
+		*/
+		.when('angular_test.html', {
+			templateUrl: 'views/hello.html'
+		})
+		/*
+		.when('/login', {
+			templateUrl: 'login.html',
+			controller: 'AppController',
+			resolve: {
+				'data': ['$http', function($http) {
+					return $http.get('/faked').then(
+						function sucess(resp) { return resp.data; },
+						function error(reason) { return false; }
+					);
+				}]
+			}
+		})
+		*/
+		.otherwise({
+			redirectTo: ''
+		})
+		;
+}]);
+
+//#directive
 app.directive('ensureUnique', function($http) {
 	return {
 		require: 'ngModel',
@@ -166,21 +316,43 @@ app.directive('link', function() {
 					$log.info("Create a new tag in link directive");
 					$element.append(a);
 				});
-			}
+			},
 		compile: function(tEle, tAttr, transcludeFun) {
-			var tplEl = angular.element('<div>' + 
-					'<h2></h2>' +
-					'</div>';
-			var h2 = tplEl.find('h2);
+			var tplEl = angular.element('<div><h2></h2></div>');
+			var h2 = tplEl.find('h2');
 			h2.attr('type', tAttrs.type);
 			h2.attr('ng-model', tAttrs.ngModel);
 			h2.val('hello');
 			tEle.replaceWith(tplEl);
 			return function(scope, ele, attrs) {
 			};
-		};
-	});
+		},
+	}
+});
 
+app.directive('myNgDirect', function() {
+	return {
+		require: "?ngModel",
+		link: function(scope, ele, attrs, ngModel) {
+			if (!ngModel) return;
+			ngModel.$render = function() {
+				ele.html(ngModel.$viewValue() || 'None');
+			};
+
+			$(function() {
+				ele.datepicker({
+					onSelect: function(date) {
+						scope.$apply(function() {
+							ngModel.$setViewValue(date);
+						});
+					},
+				});
+			})
+		}
+	};
+})
+
+//#controller
 app.controller('SimpleController', function() {
 	this.name =  "Anna";
 });

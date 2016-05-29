@@ -243,6 +243,28 @@
 		</div>
 
 
+		<hr>
+		<h1>View start</h1>
+	   	<div ng-view></div>
+		<h1>View end</h1>
+
+
+		<hr>
+		<div ng-controller="UseFacController">
+			<button ng-click="sayHello()">SayHello</button>
+			<hr>
+			<h3>github name:</h3><input type="text" ng-model="github.username"/>
+			<h4>{{github.events[0].actor.login}}</h4>
+		</div>
+		<div ng-controller="UseFacController">
+			<h4>{{githubUrl}}</h4>
+
+		</div>
+
+		
+
+
+
 
 		<hr>
 		<h1>WrongWay</h1>
