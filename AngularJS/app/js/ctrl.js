@@ -18,7 +18,7 @@ var app = angular.module('App', ['ngRoute']);
 //var app = angular.module('App', ['emailParser']);
 
 //#run
-app.run(function($rootScope, $timeout, $location, $window) {
+app.run(function($rootScope, $timeout, $http, $location, $window) {
 	$rootScope.name = "Anna";
 
 	$rootScope.isDisabled = true;
@@ -51,6 +51,15 @@ app.run(function($rootScope, $timeout, $location, $window) {
 		$rootScope.imgSrc = "imgs/1.JPG";
 
 	}, 5000);
+
+	/* // not work
+	$rootScope.$apply(function() {
+		$http({
+			method: 'GET',
+			url: 'http://baidu.com'
+		});
+	});
+	*/
 });
 
 //#service
@@ -79,6 +88,22 @@ var greeterDecrator = function($delegate, $log) {
 };
 //#factory
 app
+.factory('GithubService', ['$q', '$http',
+	function($q, $http) {
+		var getPullRequest = function() {
+			var deferred = $q.defer();
+			$http.get('https://api.github.com/repos/angular/angular.js/.pulls')
+				.success(function(data) {
+						deferred.reslove(data);
+				}).error(function(reason) {
+						deferred.reject(reason);
+				});
+			return deferred.promise;
+		}
+		return {
+			getPullRequest: getPullRequest
+		};
+}])
 /*
 .factory('greeter', function(apikey, apikey2) {
 	return {
@@ -118,9 +143,8 @@ app
 		},
 
 	}
-}).controller('UseFacController', ['$scope', '$timeout', 'greeter', 'GithubAPIService', 'personService', function($scope, $timeout, greeter, GithubAPIService, personService) {
-	$scope.sayHello = function() {
-
+}).controller('UseFacController', ['$scope', '$timeout', '$http', 'greeter', 'GithubAPIService', 'personService', function($scope, $timeout, $http, greeter, GithubAPIService, personService) {
+	$scope.sayHello = function($http) {
 		console.log("get name from personService: " + personService.getName());
 		greeter.greet('Hello');
 		GithubAPIService.setGithubUrl('sss');
