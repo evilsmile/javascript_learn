@@ -174,16 +174,20 @@ app.config(['$locationProvider', function($locationProvider) {
 
 app.config(['$routeProvider', function($routeProvider) {
 	$routeProvider
+		.when('/home', {
+			templateUrl: 'views/main.html',
+			controller: 'HomeController'})
+		.when('/', {
+			templateUrl: 'views/login.html',
+			controller: 'LoginController'})
 		/*
 		.when('/', {
 			templateUrl: 'angular_test.html',
 			controller: 'AppController'
 		})
-		*/
 		.when('angular_test.html', {
 			templateUrl: 'views/hello.html'
 		})
-		/*
 		.when('/login', {
 			templateUrl: 'login.html',
 			controller: 'AppController',
@@ -202,6 +206,32 @@ app.config(['$routeProvider', function($routeProvider) {
 		})
 		;
 }]);
+
+app
+.controller('HomeController', function($route) {
+		console.log('This is Home Controller');
+})
+.controller('LoginController', function() {
+		console.log('This is Login Controller');
+})
+.controller('FrameCtroller', function($scope, $timeout) {
+		$scope.time = {
+			today: new Date()
+		};
+		$scope.user = {
+			timezone: 'US/Pacific'
+		};
+		var updateClock = function() {
+			$scope.time.today = new Date();
+		};
+		var tick = function() {
+			$timeout(function() {
+				$scope.$apply(updateClock);
+				tick();
+			}, 1000);
+		}
+		tick();
+});
 
 //#directive
 app.directive('ensureUnique', function($http) {
@@ -376,18 +406,58 @@ app.directive('myNgDirect', function() {
 	};
 })
 
+app.directive('notification', function($timeout) {
+	var html = '<div class="notification">' +
+			'<div class="notification-content">' +
+				'<p>{{ myMessage }}</p>' +
+			'</div>' +
+			'</div>';
+	return {
+		restrict: 'A',
+		scope: { myMessage: '=' },
+		template: html,
+		replace: true,
+		link: function(scope, ele, attrs) {
+			scope.$watch('myMessage', function(n, o) {
+				if (n) {
+					$timeout(function() {
+						ele.addClass('ng-hide');
+					}, 20000);
+				}
+			});
+		},
+}});
+
+
 //#controller
-app.controller('SimpleController', function() {
+app.controller('SimpleController', function($scope) {
 	this.name =  "Anna";
+	
 });
 
 //app.controller('AppController', ['$scope', '$parse', 'EmailParser', function ($scope, $parse, EmailParser) {
-app.controller('AppController', ['$scope', '$parse',  function ($scope, $parse ) {
+app.controller('AppController', ['$scope', '$parse', '$location', function ($scope, $parse , $location) {
+
+		// Event test
+		// -- start --
+		$scope.$on('$viewContentLoaded',  function(evt) {
+			console.log('include content loaded!');
+		});
+		$scope.$on('$locationChangeStart',  function(evt) {
+			console.log('locate change start!');
+		});
+
+		$location.path('/views/home.html');
+
+		// -- end --
 
 		$scope.clock = {
 			now : new Date(),
 		};	
-
+		$scope.myEmails = [
+			{ from : 'lj@evil.com', subject : 'rain day' },
+			{ from : 'ann@evil.com', subject : 'sunny day' },
+		];
 		$scope.g_cnt = 88888;
 		$scope.g_s = 'g_s';
 		$scope.cnt = {
